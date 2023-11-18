@@ -1,10 +1,13 @@
 import math
+import re
 
 
 class CalculatorController:
     def __init__(self, model, view):
         self.model = model
         self.view = view
+
+        self.operators = ['+', '-', '*', '/']
 
     def buttonClicked(self, label):
         if label == "%":
@@ -70,7 +73,10 @@ class CalculatorController:
 
     def calculate(self):
         try:
-            self.model.expression = str(eval(self.model.expression))
+            result = eval(self.model.expression)
+            if result == round(result):
+                result = round(result)
+            self.model.expression = str(result)
             self.view.updateEntry(self.model.expression)
         except Exception:
             self.view.updateEntry("Error")
@@ -84,10 +90,16 @@ class CalculatorController:
             self.view.updateEntry(self.model.expression)
 
     def addDecimalPoint(self):
-        if "." not in self.model.expression:
+        expressionParts = re.split(
+            f'[{",".join(self.operators)}]', self.model.expression)
+        lastPart = expressionParts[-1]
+        if lastPart != "" and "." not in lastPart:
             self.model.expression += "."
             self.view.updateEntry(self.model.expression)
 
     def appendToExpression(self, label):
-        self.model.expression += label
+        if label in self.operators and self.model.expression[-1] in self.operators:
+            self.model.expression = self.model.expression[:-1] + label
+        else:
+            self.model.expression += label
         self.view.updateEntry(self.model.expression)
